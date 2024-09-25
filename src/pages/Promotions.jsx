@@ -38,12 +38,14 @@ function Promotions() {
   const [name, setName] = useState('');
   const [discount, setDiscount] = useState('');
   
-  const fileInputRef = useRef(null);
+  
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [promotions, setPromotions] = useState([]);
   const [rowModesModel, setRowModesModel] = useState({});
+
+  const [SelectedRows, setgetSelectedRows] = useState([]);
 
   useEffect(() => {
     axios.get('http://127.0.0.1:5000/promotions')
@@ -65,7 +67,11 @@ function Promotions() {
   };
 
   const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+
+
+    setPromotions(promotions.filter((row) => row.id !== id));
+    axios.delete(`http://localhost:5000/promotion?id=${id}`)
+    setSuccessMessage('Promoção deletada com sucesso!');
   };
 
   const handleCancelClick = (id) => () => {
@@ -97,8 +103,8 @@ function Promotions() {
 
     });
       setSuccessMessage('Promotion updated successfully!');
-      const updatedRows = rows.map((row) => (row.id === newRow.id ? response.data : row));
-      setRows(updatedRows);
+      const updatedRows = promotions.map((row) => (row.id === newRow.id ? response.data : row));
+      setPromotions(updatedRows);
     } catch (error) {
       console.error('Error updating Promotion:', error);
       setErrorMessage('Failed to update promotion.');
@@ -106,28 +112,7 @@ function Promotions() {
 
     return newRow; // Return the updated row to refresh the grid
   };
-
-  const handleDelete = async () => {
-    console.log("passou aqui!");
-    console.log("teste2",rowSelectionModel);
-    console.log("teste3",SelectedRows);
-    
-    try {
-      await Promise.all(
-        rowSelectionModel.map((rowSelectionModel) =>
-          console.log("teste",rowSelectionModel),
-          console.log(`http://localhost:5000/promotion?id=${rowSelectionModel}`),
-          axios.delete(`http://localhost:5000/promotion?id=${rowSelectionModel}`),
-          
-        )
-      );
-      
-      
-    } catch (error) {
-      console.error("Error deleting items:", error);
-      // Optionally, show a notification to the user
-    }
-  };
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -148,6 +133,7 @@ function Promotions() {
       setSuccessMessage('Registrado com Sucesso!');
       setName('');
       setDiscount('');
+      
       
       
     } catch (error) {
@@ -267,17 +253,7 @@ function Promotions() {
           <Box sx={{ height: 600, width: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
               <Grid container spacing={4}>
-                <Grid >
-                  <Button
-                    variant="contained" 
-                    color="error" 
-                    onClick={handleDelete}
-                  disabled={rowSelectionModel.length === 0}
-                  sx={{ marginBottom: 2 }}
-                >
-                  Excluir
-                </Button>
-              </Grid>
+                
             
               <Grid size={2}>
                 <Snackbar
