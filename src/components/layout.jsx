@@ -64,7 +64,7 @@ export default function DashboardLayoutBasic() {
             icon: <CategoryIcon />,
           },
           {
-            segment: 'promoção',
+            segment: 'promotions',
             title: 'Promoção',
             icon: <DiscountIcon />,
           },

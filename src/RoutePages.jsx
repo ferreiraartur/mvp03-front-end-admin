@@ -3,6 +3,7 @@ import {BrowserRouter,Route,Routes } from "react-router-dom";
 
 import Courses from './pages/Courses'
 import Categories from './pages/Categories'
+import Promotions from './pages/Promotions'
 import DashboardLayoutBasic from './components/layout';
 
 function RoutePages(){
@@ -14,6 +15,7 @@ function RoutePages(){
                   
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/categories" element={<Categories/>} />
+                    <Route path="/promotions" element={<Promotions/>} />
 
                 </Route>
             </Routes>         
