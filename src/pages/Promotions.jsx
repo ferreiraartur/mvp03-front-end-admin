@@ -8,15 +8,16 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import {GridRowModes,DataGrid,GridToolbarContainer,GridActionsCellItem,GridRowEditStopReasons,} from '@mui/x-data-grid';
+//import {randomId} from '@mui/x-data-grid-generator';
 
 function EditToolbar(props) {
-    const { setPromotions, setRowModesModel } = props;
+    const { setPromotions, setRowModesModel,availableIds } = props;
   
     const handleClick = () => {
       const id = randomId();
       setPromotions((oldPromotions) => [
         ...oldPromotions,
-        { id, name: '', age: '', role: '', isNew: true },
+        { id, name: '', discount: '', isNew: true },
       ]);
       setRowModesModel((oldModel) => ({
         ...oldModel,
@@ -26,9 +27,9 @@ function EditToolbar(props) {
   
     return (
       <GridToolbarContainer>
-        <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+       {/* <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
           Add record
-        </Button>
+        </Button>*/}
       </GridToolbarContainer>
     );
   }

@@ -14,6 +14,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",
+    "@mui/x-data-grid-generator": "^7.18.0",
     "@toolpad/core": "^0.6.0",
     "@toolpad/studio": "^0.6.0",
     "axios": "^1.7.7",
