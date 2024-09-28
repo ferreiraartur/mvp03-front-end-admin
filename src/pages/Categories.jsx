@@ -2,7 +2,35 @@ import { useEffect, useState,useRef } from "react"
 import {Box, Paper, Button, TextField,FormControl,InputLabel, Input, Snackbar} from '@mui/material';
 import axios from 'axios';
 import Grid from '@mui/material/Grid2';
-import { DataGrid } from '@mui/x-data-grid';
+import {GridRowModes,DataGrid,GridToolbarContainer,GridActionsCellItem,GridRowEditStopReasons,} from '@mui/x-data-grid';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
+
+function EditToolbar(props) {
+  const { setCategories, setRowModesModel,availableIds } = props;
+
+  const handleClick = () => {
+    const id = randomId();
+    setCourses((oldCourses) => [
+      ...oldCourses,
+      { id, title: '', content: '',price: '', isNew: true },
+    ]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+    }));
+  };
+
+  return (
+    <GridToolbarContainer>
+     {/* <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+        Add record
+      </Button>*/}
+    </GridToolbarContainer>
+  );
+}
 
 function Categories() {
 
@@ -13,6 +41,7 @@ function Categories() {
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [rowModesModel, setRowModesModel] = useState({});
 
   useEffect(() => {
     axios.get('http://127.0.0.1:5000/categories')
@@ -20,11 +49,15 @@ function Categories() {
       .catch(error => console.log(error))
   }, [])
 
-  const [Categories, setCategories] = useState([])
+  const [categories, setCategories] = useState([])
 
   const handleCloseSnackbar = () => {
     setSuccessMessage('');
     setErrorMessage('');
+  };
+
+  const handleRowModesModelChange = (newRowModesModel) => {
+    setRowModesModel(newRowModesModel);
   };
 
   const handleImageChange = (event) => {
@@ -35,19 +68,62 @@ function Categories() {
     }
   };
 
+  const handleRowEditStop = (params, event) => {
+    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+      event.defaultMuiPrevented = true;
+    }
+  };
+
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    });
+
+    const editedRow = categories.find((row) => row.id === id);
+    if (editedRow.isNew) {
+      setCategories(categories.filter((row) => row.id !== id));
+    }
+  };
+
   const handleProcessRowUpdate = async (newRow) => {
     console.log("passou aqui 123");
     try {
-      const response = await axios.put(`http://localhost:5000/categorie/${newRow.id}`, newRow);
-      setSuccessMessage('Categorie updated successfully!');
-      const updatedRows = rows.map((row) => (row.id === newRow.id ? response.data : row));
-      setRows(updatedRows);
+       
+
+      const response = await axios.put(`http://localhost:5000/category?id=${newRow.id}`, newRow,{
+        headers: {
+            'Content-Type': 'multipart/form-data',
+          },    
+
+
+    });
+      setSuccessMessage('Categoria atualizada com sucesso!');
+      const updatedRows = categories.map((row) => (row.id === newRow.id ? response.data : row));
+      setCategories(updatedRows);
     } catch (error) {
-      console.error('Error updating Categorie:', error);
-      setErrorMessage('Failed to update categorie.');
+      console.error('Error updating Course:', error);
+      setErrorMessage('Failed to update course.');
     }
 
     return newRow; // Return the updated row to refresh the grid
+  };
+
+
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleDeleteClick = (id) => () => {
+
+
+    setCategories(categories.filter((row) => row.id !== id));
+    axios.delete(`http://localhost:5000/category?id=${id}`)
+    setSuccessMessage('Categoria deletada com sucesso!');
   };
 
   const handleDelete = async () => {
@@ -102,8 +178,54 @@ function Categories() {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'name', headerName: 'Name', width: 200},
-    { field: 'description', headerName: 'Description', width: 600 },
+    { field: 'name', headerName: 'Name', width: 200, editable: true},
+    { field: 'description', headerName: 'Description', width: 600, editable: true },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      cellClassName: 'actions',
+      getActions: ({ id }) => {
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem
+              icon={<SaveIcon />}
+              label="Save"
+              sx={{
+                color: 'primary.main',
+              }}
+              onClick={handleSaveClick(id)}
+            />,
+            <GridActionsCellItem
+              icon={<CancelIcon />}
+              label="Cancel"
+              className="textPrimary"
+              onClick={handleCancelClick(id)}
+              color="inherit"
+            />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem
+            icon={<EditIcon />}
+            label="Edit"
+            className="textPrimary"
+            onClick={handleEditClick(id)}
+            color="inherit"
+          />,
+          <GridActionsCellItem
+            icon={<DeleteIcon />}
+            label="Delete"
+            onClick={handleDeleteClick(id)}
+            color="inherit"
+          />,
+        ];
+      },
+    },
    
     
   ];
@@ -186,22 +308,22 @@ function Categories() {
           </Box>
           
           <DataGrid
-            onCellEditStop={handleProcessRowUpdate}
-            rows={Categories}            
+            rows={categories}            
             columns={columns}
+            editMode="row"
+            rowModesModel={rowModesModel}
+            onRowModesModelChange={handleRowModesModelChange}
+            onRowEditStop={handleRowEditStop}
+            processRowUpdate={handleProcessRowUpdate}
+            slots={{
+                toolbar: EditToolbar,
+            }}
+            slotProps={{
+                toolbar: { setCategories, setRowModesModel },
+            }}
             initialState={{ pagination: { paginationModel } }}
             pageSizeOptions={[5, 10]}
-            checkboxSelection
             disableRowSelectionOnClick
-            onSelectionModelChange={({selectionModel}) => {
-              const rowIds = selectionModel.map(rowId => parseInt(String(rowId), 10));
-              const rowsToDelete = rows.filter(row => rowIds.includes(row.id));
-              setDeletedRows(rowsToDelete);
-            }}
-            onRowSelectionModelChange={(newRowSelectionModel) => {
-              setRowSelectionModel(newRowSelectionModel);
-            }}
-            rowSelectionModel={rowSelectionModel}
             sx={{ border: 0 }}         
           
           />
