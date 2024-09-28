@@ -1,5 +1,5 @@
 import { useEffect, useState,useRef } from "react"
-import {Box, Paper, Button, TextField,FormControl,InputLabel, Input, Snackbar} from '@mui/material';
+import {Box, Paper, Button, TextField,FormControl,InputLabel, Input, Snackbar, FormControlLabel, FormLabel, RadioGroup, Radio} from '@mui/material';
 import axios from 'axios';
 import Grid from '@mui/material/Grid2';
 import AddIcon from '@mui/icons-material/Add';
@@ -8,15 +8,16 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import {GridRowModes,DataGrid,GridToolbarContainer,GridActionsCellItem,GridRowEditStopReasons,} from '@mui/x-data-grid';
+
 //import {randomId} from '@mui/x-data-grid-generator';
 
 function EditToolbar(props) {
-    const { setPromotions, setRowModesModel,availableIds } = props;
+    const { setCupons, setRowModesModel,availableIds } = props;
   
     const handleClick = () => {
       const id = randomId();
-      setPromotions((oldPromotions) => [
-        ...oldPromotions,
+      setCupons((oldCupons) => [
+        ...oldCupons,
         { id, name: '', discount: '', isNew: true },
       ]);
       setRowModesModel((oldModel) => ({
@@ -34,23 +35,24 @@ function EditToolbar(props) {
     );
   }
 
-function Promotions() {
+function Cupons() {
 
   const [name, setName] = useState('');
   const [discount, setDiscount] = useState('');
+  const [valid, setValid] = useState('');
   
   
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [promotions, setPromotions] = useState([]);
+  const [cupons, setCupons] = useState([]);
   const [rowModesModel, setRowModesModel] = useState({});
 
   const [SelectedRows, setgetSelectedRows] = useState([]);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:5000/promotions')
-      .then(res => setPromotions(res.data.promotions))
+    axios.get('http://127.0.0.1:5000/cupons')
+      .then(res => setCupons(res.data.cupons))
       .catch(error => console.log(error))
   }, [])
 
@@ -70,9 +72,9 @@ function Promotions() {
   const handleDeleteClick = (id) => () => {
 
 
-    setPromotions(promotions.filter((row) => row.id !== id));
-    axios.delete(`http://localhost:5000/promotion?id=${id}`)
-    setSuccessMessage('Promoção deletada com sucesso!');
+    setCupons(cupons.filter((row) => row.id !== id));
+    axios.delete(`http://localhost:5000/cupom?id=${id}`)
+    setSuccessMessage('Cupom deletada com sucesso!');
   };
 
   const handleCancelClick = (id) => () => {
@@ -81,9 +83,9 @@ function Promotions() {
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
-    const editedRow = promotions.find((row) => row.id === id);
+    const editedRow = cupons.find((row) => row.id === id);
     if (editedRow.isNew) {
-      setPromotions(promotions.filter((row) => row.id !== id));
+      setCupons(cupons.filter((row) => row.id !== id));
     }
   };
 
@@ -95,20 +97,21 @@ function Promotions() {
         const formData = new FormData();
         formData.append('name', name);
         formData.append('discount', discount);
+        formData.append('valid', valid);
 
-      const response = await axios.put(`http://localhost:5000/promotion?id=${newRow.id}`, newRow,{
+      const response = await axios.put(`http://localhost:5000/cupom?id=${newRow.id}`, newRow,{
         headers: {
             'Content-Type': 'multipart/form-data',
           },    
 
 
     });
-      setSuccessMessage('Promotion updated successfully!');
-      const updatedRows = promotions.map((row) => (row.id === newRow.id ? response.data : row));
-      setPromotions(updatedRows);
+      setSuccessMessage('Cupom updated successfully!');
+      const updatedRows = cupons.map((row) => (row.id === newRow.id ? response.data : row));
+      setCupons(updatedRows);
     } catch (error) {
-      console.error('Error updating Promotion:', error);
-      setErrorMessage('Failed to update promotion.');
+      console.error('Error updating Cupom:', error);
+      setErrorMessage('Failed to update cupom.');
     }
 
     return newRow; // Return the updated row to refresh the grid
@@ -121,9 +124,10 @@ function Promotions() {
       const formData = new FormData();
       formData.append('name', name);
       formData.append('discount', discount);
+      formData.append('valid', valid);
       
       
-      const response = await axios.post('http://localhost:5000/promotion',formData,{
+      const response = await axios.post('http://localhost:5000/cupom',formData,{
         headers: {
           'Content-Type': 'multipart/form-data',
         },        
@@ -153,16 +157,58 @@ function Promotions() {
     }
   };
 
-  const processRowUpdate = (newRow) => {
-    const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-    return updatedRow;
+  //const processRowUpdate = (newRow) => {
+   // const updatedRow = { ...newRow, isNew: false };
+   // setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+   // return updatedRow;
+  //};
+
+  const handleValidChange = (id, value) => {
+    setCupons((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, valid: value } : row))
+    );
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'name', headerName: 'Name', width: 130, editable: true},
-    { field: 'discount', headerName: 'discount', width: 130, editable: true },
+    { field: 'discount', headerName: 'Desconto', width: 200, editable: true },
+    {
+      field: 'valid',
+      headerName: 'Status',
+      width: 300,
+      renderCell: (params) => {
+        const isInEditMode = rowModesModel[params.id]?.mode === GridRowModes.Edit;
+
+        return isInEditMode ? (
+          <div>
+            <FormControlLabel
+              control={
+                <Radio
+                  checked={params.value === 'true'}
+                  onChange={() => handleValidChange(params.id, 'true')}
+                />
+              }
+              label="Ativado"
+            />
+            <FormControlLabel
+              control={
+                <Radio
+                  checked={params.value === 'false'}
+                  onChange={() => handleValidChange(params.id, 'false')}
+                />
+              }
+              label="Desativado"
+            />
+          </div>
+        ) : (
+          <span>{params.row.valid}</span>
+          //<span>{params.row.valid === 'true' ? 'Ativado' : 'Desativado'}</span>
+        );
+      },
+    }
+
+
     ,
     {
       field: 'actions',
@@ -240,6 +286,19 @@ function Promotions() {
                   onChange={(e) => setDiscount(e.target.value)}
                   required
                 ></TextField>
+
+              
+              <RadioGroup
+                aria-labelledby="demo-radio-buttons-group-label"
+                defaultValue="true"
+                name="radio-buttons-group"
+                value={valid} 
+                onChange={(e) => setValid(e.target.value)}
+              >
+                <FormControlLabel value="true" control={<Radio />} label="Ativado" />
+                <FormControlLabel value="false" control={<Radio />} label="Desativado" />
+                
+              </RadioGroup>
                  
 
               </FormControl>
@@ -277,35 +336,26 @@ function Promotions() {
           </Box>
           
           <DataGrid
-            //onCellEditStop={handleProcessRowUpdate}
-            rows={promotions}            
+            
+            rows={cupons}            
             columns={columns}
             editMode="row"
             rowModesModel={rowModesModel}
             onRowModesModelChange={handleRowModesModelChange}
             onRowEditStop={handleRowEditStop}
             processRowUpdate={handleProcessRowUpdate}
-            //onProcessRowUpdateError={handleProcessRowUpdateError}
             slots={{
                 toolbar: EditToolbar,
             }}
             slotProps={{
-                toolbar: { setPromotions, setRowModesModel },
+                toolbar: { setCupons, setRowModesModel },
             }}
             initialState={{ pagination: { paginationModel } }}
             pageSizeOptions={[5, 10]}
-            //checkboxSelection
             disableRowSelectionOnClick
-            //onSelectionModelChange={({selectionModel}) => {
-             // const rowIds = selectionModel.map(rowId => parseInt(String(rowId), 10));
-             // const rowsToDelete = rows.filter(row => rowIds.includes(row.id));
-             // setDeletedRows(rowsToDelete);
-            //}}
-            //onRowSelectionModelChange={(newRowSelectionModel) => {
-            //  setRowSelectionModel(newRowSelectionModel);
-            //}}
-            //rowSelectionModel={rowSelectionModel}
-            sx={{ border: 0 }}         
+            sx={{ border: 0 }}
+            
+                  
           
           />
           <Snackbar
@@ -332,4 +382,4 @@ function Promotions() {
   )
 }
 
-export default Promotions
+export default Cupons
