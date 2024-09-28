@@ -80,7 +80,7 @@ function Categories() {
       formData.append('description', description);
       formData.append('file', selectedImage);
       
-      const response = await axios.post('http://localhost:5000/categories',formData,{
+      const response = await axios.post('http://localhost:5000/category',formData,{
         headers: {
           'Content-Type': 'multipart/form-data',
         },        
@@ -88,7 +88,7 @@ function Categories() {
 
     });
       console.log('Response:', response.data);
-      setSuccessMessage('Image uploaded successfully!');
+      setSuccessMessage('Categoria cadastrada com sucesso!');
       setName('');
       setDescription('');
       setSelectedImage(null);
@@ -102,8 +102,8 @@ function Categories() {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'name', headerName: 'Name', width: 130},
-    { field: 'description', headerName: 'Description', width: 130 },
+    { field: 'name', headerName: 'Name', width: 200},
+    { field: 'description', headerName: 'Description', width: 600 },
    
     
   ];
@@ -122,7 +122,7 @@ function Categories() {
                   label="Name"
                   name="name"
                   value={name}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   required
                 ></TextField>
 
@@ -130,7 +130,7 @@ function Categories() {
                   label="Description"
                   name="description"
                   value={description}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   required
                 ></TextField>
                  <Input

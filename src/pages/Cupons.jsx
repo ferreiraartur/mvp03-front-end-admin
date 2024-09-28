@@ -47,7 +47,6 @@ function Cupons() {
   const [errorMessage, setErrorMessage] = useState('');
   const [cupons, setCupons] = useState([]);
   const [rowModesModel, setRowModesModel] = useState({});
-
   const [SelectedRows, setgetSelectedRows] = useState([]);
 
   useEffect(() => {
@@ -94,10 +93,7 @@ function Cupons() {
   const handleProcessRowUpdate = async (newRow) => {
     console.log("passou aqui 123");
     try {
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('discount', discount);
-        formData.append('valid', valid);
+       
 
       const response = await axios.put(`http://localhost:5000/cupom?id=${newRow.id}`, newRow,{
         headers: {

@@ -1,12 +1,41 @@
 import { useEffect, useState,useRef } from "react"
 import Typography from '@mui/material/Typography';
-import { DataGrid } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import {Box, Button, TextField,FormControl,InputLabel, Input, Snackbar} from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import axios from 'axios';
 import AddIcon from '@mui/icons-material/Add';
+import {GridRowModes,DataGrid,GridToolbarContainer,GridActionsCellItem,GridRowEditStopReasons,} from '@mui/x-data-grid';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
 //import './App.css'
+
+function EditToolbar(props) {
+  const { setCourses, setRowModesModel,availableIds } = props;
+
+  const handleClick = () => {
+    const id = randomId();
+    setCourses((oldCourses) => [
+      ...oldCourses,
+      { id, title: '', content: '',price: '', isNew: true },
+    ]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+    }));
+  };
+
+  return (
+    <GridToolbarContainer>
+     {/* <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+        Add record
+      </Button>*/}
+    </GridToolbarContainer>
+  );
+}
+
 
 function Courses() {
 
@@ -18,18 +47,21 @@ function Courses() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [imageURL, setImageURL] = useState('');
   const [price, setPrice] = useState('');
+
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [CourseList, setCourseList] = useState([])
+  const [courseList, setCourseList] = useState([])
   const [deletedRows, setDeletedRows] = useState([]);
-
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [SelectedRows, setgetSelectedRows] = useState([]);
   const [rows, setRows] = useState([]);
   const fileInputRef = useRef(null);
+  const [rowModesModel, setRowModesModel] = useState({});
+
+
+  
 
   const handleTeste = () => {
     
@@ -43,7 +75,7 @@ function Courses() {
       formData.append('title', title);
       formData.append('content', content);
       formData.append('price', price);
-      formData.append('imageURL', imageURL);
+      //formData.append('imageURL', imageURL);
       formData.append('file', selectedImage);
       
       const response = await axios.post('http://localhost:5000/course',formData,{
@@ -54,11 +86,11 @@ function Courses() {
 
     });
       console.log('Response:', response.data);
-      setSuccessMessage('Image uploaded successfully!');
+      setSuccessMessage('Curso cadastrado com sucesso!');
       setTitle('');
       setContent('');
       setPrice('');
-      setImageURL('');
+      //setImageURL('');
       setSelectedImage(null);
       fileInputRef.current.value = '';
       
@@ -108,10 +140,18 @@ function Courses() {
   const handleProcessRowUpdate = async (newRow) => {
     console.log("passou aqui 123");
     try {
-      const response = await axios.put(`http://localhost:5000/course/${newRow.id}`, newRow);
+       
+
+      const response = await axios.put(`http://localhost:5000/course?id=${newRow.id}`, newRow,{
+        headers: {
+            'Content-Type': 'multipart/form-data',
+          },    
+
+
+    });
       setSuccessMessage('Course updated successfully!');
-      const updatedRows = rows.map((row) => (row.id === newRow.id ? response.data : row));
-      setRows(updatedRows);
+      const updatedRows = courseList.map((row) => (row.id === newRow.id ? response.data : row));
+      setCourseList(updatedRows);
     } catch (error) {
       console.error('Error updating Course:', error);
       setErrorMessage('Failed to update course.');
@@ -121,13 +161,99 @@ function Courses() {
   };
 
 
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    });
+
+    const editedRow = courseList.find((row) => row.id === id);
+    if (editedRow.isNew) {
+      setCourseList(courseList.filter((row) => row.id !== id));
+    }
+  };
+
+  const handleRowModesModelChange = (newRowModesModel) => {
+    setRowModesModel(newRowModesModel);
+  };
+
+  const handleRowEditStop = (params, event) => {
+    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+      event.defaultMuiPrevented = true;
+    }
+  };
+
+
+  const handleDeleteClick = (id) => () => {
+
+
+    setCourseList(courseList.filter((row) => row.id !== id));
+    axios.delete(`http://localhost:5000/course?id=${id}`)
+    setSuccessMessage('Curso deletado com sucesso!');
+  };
  
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'title', headerName: 'Title', width: 130, editable: true },
-    { field: 'content', headerName: 'Content', width: 130 },
-    { field: 'price', headerName: 'Price', width: 130 },
+    { field: 'content', headerName: 'Content', width: 130, editable: true },
+    { field: 'price', headerName: 'Price', width: 130, editable: true },
+
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      cellClassName: 'actions',
+      getActions: ({ id }) => {
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem
+              icon={<SaveIcon />}
+              label="Save"
+              sx={{
+                color: 'primary.main',
+              }}
+              onClick={handleSaveClick(id)}
+            />,
+            <GridActionsCellItem
+              icon={<CancelIcon />}
+              label="Cancel"
+              className="textPrimary"
+              onClick={handleCancelClick(id)}
+              color="inherit"
+            />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem
+            icon={<EditIcon />}
+            label="Edit"
+            className="textPrimary"
+            onClick={handleEditClick(id)}
+            color="inherit"
+          />,
+          <GridActionsCellItem
+            icon={<DeleteIcon />}
+            label="Delete"
+            onClick={handleDeleteClick(id)}
+            color="inherit"
+          />,
+        ];
+      },
+    },
+    
     
   ];
 
@@ -164,6 +290,7 @@ function Courses() {
                   required
                 ></TextField>
 
+                {/*
                 <TextField
                   label="imageURL"
                   name="imageURL"
@@ -171,6 +298,7 @@ function Courses() {
                   onChange={(e) => setImageURL(e.target.value)}
                   required
                 ></TextField>
+                */}
 
                 
                   <Input
@@ -238,23 +366,23 @@ function Courses() {
           </Box>
           
           <DataGrid
-            onCellEditStop={handleProcessRowUpdate}
-            rows={CourseList}            
+            rows={courseList}            
             columns={columns}
+            editMode="row"
+            rowModesModel={rowModesModel}
+            onRowModesModelChange={handleRowModesModelChange}
+            onRowEditStop={handleRowEditStop}
+            processRowUpdate={handleProcessRowUpdate}
+            slots={{
+                toolbar: EditToolbar,
+            }}
+            slotProps={{
+                toolbar: { setCourseList, setRowModesModel },
+            }}
             initialState={{ pagination: { paginationModel } }}
             pageSizeOptions={[5, 10]}
-            checkboxSelection
             disableRowSelectionOnClick
-            onSelectionModelChange={({selectionModel}) => {
-              const rowIds = selectionModel.map(rowId => parseInt(String(rowId), 10));
-              const rowsToDelete = rows.filter(row => rowIds.includes(row.id));
-              setDeletedRows(rowsToDelete);
-            }}
-            onRowSelectionModelChange={(newRowSelectionModel) => {
-              setRowSelectionModel(newRowSelectionModel);
-            }}
-            rowSelectionModel={rowSelectionModel}
-            sx={{ border: 0 }}         
+            sx={{ border: 0 }}       
           
           />
           <Snackbar
