@@ -134,6 +134,14 @@ function Cupons() {
       setSuccessMessage('Registrado com Sucesso!');
       setName('');
       setDiscount('');
+
+      // Atualizar a lista de cupons
+      setCupons((prevCupons) => {
+        return [...prevCupons, response.data]; 
+      });
+      
+
+      
       
       
       
@@ -141,6 +149,7 @@ function Cupons() {
       console.error('Error submitting form:', error);
       // Handle error appropriately
     }
+    
   }
 
   const handleRowModesModelChange = (newRowModesModel) => {
@@ -153,11 +162,7 @@ function Cupons() {
     }
   };
 
-  //const processRowUpdate = (newRow) => {
-   // const updatedRow = { ...newRow, isNew: false };
-   // setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-   // return updatedRow;
-  //};
+ 
 
   const handleValidChange = (id, value) => {
     setCupons((prev) =>
@@ -198,8 +203,12 @@ function Cupons() {
             />
           </div>
         ) : (
-          <span>{params.row.valid}</span>
-          //<span>{params.row.valid === 'true' ? 'Ativado' : 'Desativado'}</span>
+          //console.log ({params}.value)
+          //<span>{params}</span>
+          <span> {params.row.valid ? 'Ativado' : 'Desativado'} {console.log('Valid Value:', params.row.valid)}</span>
+          
+
+          
         );
       },
     }

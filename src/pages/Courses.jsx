@@ -94,6 +94,11 @@ function Courses() {
       setSelectedImage(null);
       fileInputRef.current.value = '';
       
+      // Atualizar a lista de cursos
+      setCourseList((prevCourses) => {
+        return [...prevCourses, response.data]; 
+      });
+
     } catch (error) {
       console.error('Error submitting form:', error);
       // Handle error appropriately
@@ -322,28 +327,9 @@ function Courses() {
         <Box sx={{ height: 600, width: '100%' }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
             <Grid container spacing={4}>
-              <Grid >
-                <Button
-                  variant="contained" 
-                  color="error" 
-                  onClick={handleDelete}
-                  disabled={rowSelectionModel.length === 0}
-                  sx={{ marginBottom: 2 }}
-                >
-                  Excluir
-                </Button>
-              </Grid>
+              
             
-              <Grid >
-                <Button
-                  variant="contained" 
-                  color="primary" 
-                  onClick={handleTeste}
-                  sx={{ marginBottom: 2 }}
-                >
-                  Atualizar
-                </Button>
-              </Grid>
+              
 
               <Grid size={2}>
                 <Snackbar
