@@ -127,14 +127,14 @@ function Categories() {
   };
 
   const handleDelete = async () => {
-    console.log("passou aqui!");
-    console.log("teste2",rowSelectionModel);
-    console.log("teste3",SelectedRows);
+    //console.log("passou aqui!");
+    //console.log("teste2",rowSelectionModel);
+    //console.log("teste3",SelectedRows);
     
     try {
       await Promise.all(
         rowSelectionModel.map((rowSelectionModel) =>
-          console.log("teste",rowSelectionModel),
+          //console.log("teste",rowSelectionModel),
           console.log(`http://localhost:5000/categorie?id=${rowSelectionModel}`),
           axios.delete(`http://localhost:5000/categorie?id=${rowSelectionModel}`),
           
@@ -150,6 +150,13 @@ function Categories() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // Verifica se o arquivo selecionado é nulo
+    if (!selectedImage) {
+      setErrorMessage('Por favor, selecione uma imagem para fazer o upload.');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -275,17 +282,7 @@ function Categories() {
           <Box sx={{ height: 600, width: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
               <Grid container spacing={4}>
-                <Grid >
-                  <Button
-                    variant="contained" 
-                    color="error" 
-                    onClick={handleDelete}
-                  disabled={rowSelectionModel.length === 0}
-                  sx={{ marginBottom: 2 }}
-                >
-                  Excluir
-                </Button>
-              </Grid>
+                
             
               <Grid size={2}>
                 <Snackbar

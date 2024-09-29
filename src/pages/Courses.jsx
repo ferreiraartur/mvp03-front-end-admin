@@ -61,20 +61,21 @@ function Courses() {
   const [rowModesModel, setRowModesModel] = useState({});
 
 
-  
-
-  const handleTeste = () => {
-    
-    location.reload();
-  }
-
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    
+    // Verifica se o arquivo selecionado é nulo
+    if (!selectedImage) {
+      setErrorMessage('Por favor, selecione uma imagem para fazer o upload.');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('content', content);
-      formData.append('price', price);
+      formData.append('price', parseFloat(price).toFixed(2));
       //formData.append('imageURL', imageURL);
       formData.append('file', selectedImage);
       
